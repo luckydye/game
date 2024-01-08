@@ -1,0 +1,13 @@
+[workspace]
+members = ["crates/*", "app"]
+resolver = "2"
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.dev.package.bevy]
+features = ["dynamic"]
+
+[profile.release]
+strip = "debuginfo"
+lto = "thin"
