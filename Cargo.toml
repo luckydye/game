@@ -1,5 +1,10 @@
+[package]
+name = "game"
+version = "0.1.0"
+edition = "2021"
+
 [workspace]
-members = ["crates/*", "apps/*"]
+members = ["crates/*"]
 resolver = "2"
 
 [profile.dev.package."*"]
@@ -11,3 +16,15 @@ features = ["dynamic"]
 [profile.release]
 strip = "debuginfo"
 lto = "thin"
+
+[dependencies]
+bevy = "0.12.1"
+bevy_asset_loader = { version = "0.19.1", features = ["3d"] }
+bevy_gltf_components = "0.3.0"
+bevy_registry_export = "0.1.0"
+anyhow = "1.0.86"
+hashbrown = "0.11.2"
+hematita = "0.1.0"
+itertools = "0.13.0"
+pico-args = {version = "0.4.2", features = ["combined-flags"]}
+reedline = "0.32.0"

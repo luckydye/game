@@ -8066,6 +8066,17 @@
       "type": "float",
       "typeInfo": "Value"
     },
+    "game::Coin": {
+      "additionalProperties": false,
+      "isComponent": true,
+      "isResource": false,
+      "properties": {},
+      "required": [],
+      "short_name": "Coin",
+      "title": "game::Coin",
+      "type": "object",
+      "typeInfo": "Struct"
+    },
     "glam::Affine2": {
       "additionalProperties": false,
       "isComponent": false,
@@ -9093,17 +9104,6 @@
       "title": "usize",
       "type": "uint",
       "typeInfo": "Value"
-    },
-    "yt_bevy_blender::Coin": {
-      "additionalProperties": false,
-      "isComponent": true,
-      "isResource": false,
-      "properties": {},
-      "required": [],
-      "short_name": "Coin",
-      "title": "yt_bevy_blender::Coin",
-      "type": "object",
-      "typeInfo": "Struct"
     }
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
