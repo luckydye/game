@@ -41,8 +41,70 @@ fn main() {
     .add_systems(OnEnter(MyStates::Next), start_level)
     .add_systems(
       Update,
-      |commands: Commands, query: Query<&Script>, time: Res<Time>| {
-        run_lua(commands, query, time).ok();
+      |mut commands: Commands,
+       mut query: Query<(Entity, &mut Transform, &Script)>,
+       time: Res<Time>| {
+        let t = time.delta().as_millis().clone();
+
+        commands.add(move |world: &mut World| {
+          // do whatever you want with `world` here
+
+          // note: it's a closure, you can use variables from
+          // the parent scope/function
+          eprintln!("{}", 12);
+        });
+
+        for (entity, transform, script) in query.iter_mut() {
+          let mut lua = Lua::full();
+
+          let file_name = script.file.as_str();
+          let file = File::open(file_name);
+
+          if let Ok(file) = file {
+            lua
+              .try_enter(|ctx| {
+                // transform.lock().unwrap().rotate_y(t as f32 / 100.0);
+
+                ctx.set_global(
+                  "delta",
+                  Callback::from_fn(&ctx, move |_, _, mut stack| {
+                    stack.push_back(Value::Number(t as f64));
+                    Ok(CallbackReturn::Return)
+                  }),
+                )?;
+
+                ctx.set_global(
+                  "rotate",
+                  Callback::from_fn(&ctx, move |_, _, stack| {
+                    let n = stack.get(0).to_number();
+
+                    if let Some(n) = n {
+                      // transform.lock().unwrap().rotate_y(n as f32 / 100.0);
+                    }
+
+                    Ok(CallbackReturn::Return)
+                  }),
+                )?;
+
+                Ok(())
+              })
+              .ok();
+
+            let executor = lua
+              .try_enter(|ctx| {
+                let proto = FunctionPrototype::compile(ctx, file_name, file)?;
+                let closure = Closure::new(&ctx, proto, Some(ctx.globals()))?;
+
+                let stash = ctx.stash(Executor::start(ctx, closure.into(), ()));
+                Ok(stash)
+              })
+              .ok();
+
+            if let Some(executor) = executor {
+              lua.finish(&executor);
+            }
+          }
+        }
       },
     )
     .run();
@@ -62,52 +124,4 @@ fn start_level(
     },
     Name::new("Level1"),
   ));
-}
-
-fn run_lua(mut commands: Commands, query: Query<&Script>, time: Res<Time>) -> anyhow::Result<()> {
-  let mut lua = Lua::full();
-
-  for script in query.iter() {
-    let file_name = script.file.as_str();
-    let file = File::open(file_name);
-
-    if let Ok(file) = file {
-      let t = time.delta().as_millis().clone();
-
-      lua.try_enter(|ctx| {
-        ctx.set_global(
-          "delta",
-          Callback::from_fn(&ctx, move |_, _, mut stack| {
-            stack.push_back(Value::Number(t as f64));
-            Ok(CallbackReturn::Return)
-          }),
-        )?;
-        ctx.set_global(
-          "rotate",
-          Callback::from_fn(&ctx, move |_, _, stack| {
-            let n = stack.get(0).to_number();
-
-            if let Some(n) = n {
-              // transform.rotate_y(n as f32);
-            }
-
-            Ok(CallbackReturn::Return)
-          }),
-        )?;
-        Ok(())
-      })?;
-
-      let executor = lua.try_enter(|ctx| {
-        let proto = FunctionPrototype::compile(ctx, file_name, file)?;
-        let closure = Closure::new(&ctx, proto, Some(ctx.globals()))?;
-
-        let stash = ctx.stash(Executor::start(ctx, closure.into(), ()));
-        Ok(stash)
-      })?;
-
-      lua.execute(&executor)?;
-    }
-  }
-
-  Ok(())
 }
