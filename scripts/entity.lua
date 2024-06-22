@@ -9,3 +9,5 @@ function update()
 
     return vec
 end
+
+return update()

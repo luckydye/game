@@ -23,6 +23,4 @@ bevy = "0.13.2"
 bevy_asset_loader = { version = "0.20.2", features = ["3d"] }
 bevy_gltf_components = "0.5.1"
 bevy_registry_export = "0.3.1"
-hashbrown = "0.11.2"
-hematita = "0.1.0"
-itertools = "0.13.0"
+piccolo = "0.3.3"
