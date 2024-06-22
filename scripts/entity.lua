@@ -1,7 +1,9 @@
 function update()
     vec = {}
 
-    print("hello")
+    print(delta())
+
+    -- rotate(0.1)
 
     vec[1] = 3
     vec[2] = 2

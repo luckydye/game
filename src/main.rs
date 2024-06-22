@@ -2,12 +2,31 @@ use bevy::{gltf::Gltf, prelude::*};
 use bevy_asset_loader::prelude::*;
 use bevy_gltf_components::ComponentsFromGltfPlugin;
 use bevy_registry_export::*;
-use piccolo::{Closure, Executor, FunctionPrototype, Lua};
+use piccolo::{Callback, CallbackReturn, Closure, Executor, FunctionPrototype, Lua, Value};
 use std::fs::File;
+
+#[derive(AssetCollection, Resource)]
+struct LevelAssets {
+  #[asset(path = "Scene.glb")]
+  level: Handle<Gltf>,
+}
+
+#[derive(Component, Reflect, Default, Debug)]
+#[reflect(Component)]
+struct Script {
+  file: String,
+}
+
+#[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
+enum MyStates {
+  #[default]
+  AssetLoading,
+  Next,
+}
 
 fn main() {
   App::new()
-    .register_type::<Coin>()
+    .register_type::<Script>()
     .add_plugins((
       DefaultPlugins,
       ExportRegistryPlugin::default(),
@@ -20,46 +39,13 @@ fn main() {
         .load_collection::<LevelAssets>(),
     )
     .add_systems(OnEnter(MyStates::Next), start_level)
-    .add_systems(Update, lua_scripts)
+    .add_systems(
+      Update,
+      |commands: Commands, query: Query<&Script>, time: Res<Time>| {
+        run_lua(commands, query, time).ok();
+      },
+    )
     .run();
-}
-
-#[derive(Component, Reflect, Default, Debug)]
-#[reflect(Component)]
-struct Coin;
-
-fn lua_scripts(query: Query<&mut Transform, With<Coin>>, time: Res<Time>) {
-  run_lua(query, time).ok();
-}
-
-fn run_lua(mut query: Query<&mut Transform, With<Coin>>, time: Res<Time>) -> anyhow::Result<()> {
-  for mut transform in &mut query {
-    let file_name = "scripts/entity.lua";
-    let file = File::open(file_name);
-
-    if let Ok(file) = file {
-      let mut lua = Lua::full();
-
-      let executor = lua.try_enter(|ctx| {
-        let proto = FunctionPrototype::compile(ctx, file_name, file)?;
-        let closure =
-          Closure::new(&ctx, proto, Some(ctx.globals())).expect("failed to create closure");
-
-        let stash = ctx.stash(Executor::start(ctx, closure.into(), ()));
-        Ok(stash)
-      })?;
-
-      lua.execute(&executor)?;
-    }
-  }
-
-  Ok(())
-}
-
-#[derive(AssetCollection, Resource)]
-struct LevelAssets {
-  #[asset(path = "level.glb")]
-  level: Handle<Gltf>,
 }
 
 fn start_level(
@@ -67,19 +53,6 @@ fn start_level(
   assets: Res<LevelAssets>,
   models: Res<Assets<bevy::gltf::Gltf>>,
 ) {
-  commands.spawn(PointLightBundle {
-    point_light: PointLight {
-      intensity: 4000.0,
-      shadows_enabled: true,
-      ..default()
-    },
-    transform: Transform::from_xyz(4.0, 8.0, 4.0),
-    ..default()
-  });
-  commands.spawn(Camera3dBundle {
-    transform: Transform::from_xyz(-2.5, 4.5, 9.0).looking_at(Vec3::ZERO, Vec3::Y),
-    ..default()
-  });
   let my_gltf = models.get(assets.level.clone()).unwrap();
 
   commands.spawn((
@@ -91,9 +64,50 @@ fn start_level(
   ));
 }
 
-#[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
-enum MyStates {
-  #[default]
-  AssetLoading,
-  Next,
+fn run_lua(mut commands: Commands, query: Query<&Script>, time: Res<Time>) -> anyhow::Result<()> {
+  let mut lua = Lua::full();
+
+  for script in query.iter() {
+    let file_name = script.file.as_str();
+    let file = File::open(file_name);
+
+    if let Ok(file) = file {
+      let t = time.delta().as_millis().clone();
+
+      lua.try_enter(|ctx| {
+        ctx.set_global(
+          "delta",
+          Callback::from_fn(&ctx, move |_, _, mut stack| {
+            stack.push_back(Value::Number(t as f64));
+            Ok(CallbackReturn::Return)
+          }),
+        )?;
+        ctx.set_global(
+          "rotate",
+          Callback::from_fn(&ctx, move |_, _, stack| {
+            let n = stack.get(0).to_number();
+
+            if let Some(n) = n {
+              // transform.rotate_y(n as f32);
+            }
+
+            Ok(CallbackReturn::Return)
+          }),
+        )?;
+        Ok(())
+      })?;
+
+      let executor = lua.try_enter(|ctx| {
+        let proto = FunctionPrototype::compile(ctx, file_name, file)?;
+        let closure = Closure::new(&ctx, proto, Some(ctx.globals()))?;
+
+        let stash = ctx.stash(Executor::start(ctx, closure.into(), ()));
+        Ok(stash)
+      })?;
+
+      lua.execute(&executor)?;
+    }
+  }
+
+  Ok(())
 }

@@ -10462,14 +10462,22 @@
       "type": "float",
       "typeInfo": "Value"
     },
-    "game::Coin": {
+    "game::Script": {
       "additionalProperties": false,
       "isComponent": true,
       "isResource": false,
-      "properties": {},
-      "required": [],
-      "short_name": "Coin",
-      "title": "game::Coin",
+      "properties": {
+        "file": {
+          "type": {
+            "$ref": "#/$defs/alloc::string::String"
+          }
+        }
+      },
+      "required": [
+        "file"
+      ],
+      "short_name": "Script",
+      "title": "game::Script",
       "type": "object",
       "typeInfo": "Struct"
     },
