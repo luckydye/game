@@ -1,0 +1,10 @@
+// Static tasks configuration.
+//
+// Example:
+[
+	{
+		"label": "start",
+		"command": "cargo run",
+		"allow_concurrent_runs": false
+	}
+]

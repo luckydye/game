@@ -1,5 +1,5 @@
 function update(dt)
-    rotate(dt / 200)
+    -- move(0.0, 0.01)
 end
 
 update(delta())

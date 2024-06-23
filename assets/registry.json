@@ -10462,6 +10462,17 @@
       "type": "float",
       "typeInfo": "Value"
     },
+    "game::Player": {
+      "additionalProperties": false,
+      "isComponent": true,
+      "isResource": false,
+      "properties": {},
+      "required": [],
+      "short_name": "Player",
+      "title": "game::Player",
+      "type": "object",
+      "typeInfo": "Struct"
+    },
     "game::Script": {
       "additionalProperties": false,
       "isComponent": true,

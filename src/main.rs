@@ -6,6 +6,7 @@ use piccolo::{Callback, CallbackReturn, Closure, Executor, FunctionPrototype, Lu
 use std::{
   fs::File,
   sync::{Arc, Mutex},
+  time::{SystemTime, UNIX_EPOCH},
 };
 
 #[derive(AssetCollection, Resource)]
@@ -13,6 +14,10 @@ struct LevelAssets {
   #[asset(path = "Scene.glb")]
   level: Handle<Gltf>,
 }
+
+#[derive(Component, Reflect, Default, Debug)]
+#[reflect(Component)]
+struct Player {}
 
 #[derive(Component, Reflect, Default, Debug)]
 #[reflect(Component)]
@@ -30,6 +35,7 @@ enum MyStates {
 fn main() {
   App::new()
     .register_type::<Script>()
+    .register_type::<Player>()
     .add_plugins((
       DefaultPlugins,
       ExportRegistryPlugin::default(),
@@ -55,12 +61,27 @@ fn main() {
           let file_name = script.file.as_str();
           let file = File::open(file_name);
 
+          // TODO: how to not arc mutex?
           let _transform = Arc::new(Mutex::new(transform.clone()));
 
           if let Ok(file) = file {
             lua
               .try_enter(|ctx| {
                 let transform = _transform.clone();
+                let translate = _transform.clone();
+
+                ctx.set_global(
+                  "time",
+                  Callback::from_fn(&ctx, move |_, _, mut stack| {
+                    let start = SystemTime::now();
+                    let t = start
+                      .duration_since(UNIX_EPOCH)
+                      .expect("Time went backwards");
+
+                    stack.push_back(Value::Number(t.as_millis() as f64));
+                    Ok(CallbackReturn::Return)
+                  }),
+                )?;
 
                 ctx.set_global(
                   "delta",
@@ -77,6 +98,21 @@ fn main() {
 
                     if let Some(n) = n {
                       transform.lock().unwrap().rotate_y(n as f32);
+                    }
+
+                    Ok(CallbackReturn::Return)
+                  }),
+                )?;
+
+                ctx.set_global(
+                  "move",
+                  Callback::from_fn(&ctx, move |_, _, stack| {
+                    let x = stack.get(0).to_number();
+                    let y = stack.get(1).to_number();
+
+                    if let Some((x, y)) = x.zip(y) {
+                      translate.lock().unwrap().translation.x += x as f32;
+                      translate.lock().unwrap().translation.y += y as f32;
                     }
 
                     Ok(CallbackReturn::Return)
@@ -102,6 +138,7 @@ fn main() {
             }
 
             transform.rotation = _transform.lock().unwrap().rotation.clone();
+            transform.translation = _transform.lock().unwrap().translation.clone();
           }
         }
       },
