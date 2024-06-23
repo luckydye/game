@@ -54,12 +54,13 @@ fn main() {
 
           let file_name = script.file.as_str();
           let file = File::open(file_name);
+
           let _transform = Arc::new(Mutex::new(transform.clone()));
 
           if let Ok(file) = file {
             lua
               .try_enter(|ctx| {
-                let tr = _transform.clone();
+                let transform = _transform.clone();
 
                 ctx.set_global(
                   "delta",
@@ -75,7 +76,7 @@ fn main() {
                     let n = stack.get(0).to_number();
 
                     if let Some(n) = n {
-                      tr.lock().unwrap().rotate_y(n as f32 / 100.0);
+                      transform.lock().unwrap().rotate_y(n as f32);
                     }
 
                     Ok(CallbackReturn::Return)
@@ -100,8 +101,7 @@ fn main() {
               lua.finish(&executor);
             }
 
-            println!("{:?}", _transform.lock().unwrap().rotation);
-            transform.rotate(_transform.lock().unwrap().rotation);
+            transform.rotation = _transform.lock().unwrap().rotation.clone();
           }
         }
       },
