@@ -3,7 +3,10 @@ use bevy_asset_loader::prelude::*;
 use bevy_gltf_components::ComponentsFromGltfPlugin;
 use bevy_registry_export::*;
 use piccolo::{Callback, CallbackReturn, Closure, Executor, FunctionPrototype, Lua, Value};
-use std::fs::File;
+use std::{
+  fs::File,
+  sync::{Arc, Mutex},
+};
 
 #[derive(AssetCollection, Resource)]
 struct LevelAssets {
@@ -46,24 +49,17 @@ fn main() {
        time: Res<Time>| {
         let t = time.delta().as_millis().clone();
 
-        commands.add(move |world: &mut World| {
-          // do whatever you want with `world` here
-
-          // note: it's a closure, you can use variables from
-          // the parent scope/function
-          eprintln!("{}", 12);
-        });
-
-        for (entity, transform, script) in query.iter_mut() {
+        for (entity, mut transform, script) in &mut query {
           let mut lua = Lua::full();
 
           let file_name = script.file.as_str();
           let file = File::open(file_name);
+          let _transform = Arc::new(Mutex::new(transform.clone()));
 
           if let Ok(file) = file {
             lua
               .try_enter(|ctx| {
-                // transform.lock().unwrap().rotate_y(t as f32 / 100.0);
+                let tr = _transform.clone();
 
                 ctx.set_global(
                   "delta",
@@ -79,7 +75,7 @@ fn main() {
                     let n = stack.get(0).to_number();
 
                     if let Some(n) = n {
-                      // transform.lock().unwrap().rotate_y(n as f32 / 100.0);
+                      tr.lock().unwrap().rotate_y(n as f32 / 100.0);
                     }
 
                     Ok(CallbackReturn::Return)
@@ -103,6 +99,9 @@ fn main() {
             if let Some(executor) = executor {
               lua.finish(&executor);
             }
+
+            println!("{:?}", _transform.lock().unwrap().rotation);
+            transform.rotate(_transform.lock().unwrap().rotation);
           }
         }
       },
