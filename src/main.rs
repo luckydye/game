@@ -2,6 +2,8 @@ mod level;
 mod lua;
 mod systems;
 
+use std::sync::Once;
+
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 use bevy_gltf_components::ComponentsFromGltfPlugin;
@@ -15,6 +17,7 @@ use systems::*;
 enum MyStates {
   #[default]
   AssetLoading,
+  SetupLevel,
   Next,
 }
 
@@ -32,13 +35,12 @@ fn main() {
     .insert_state::<MyStates>(MyStates::default())
     .add_loading_state(
       LoadingState::new(MyStates::AssetLoading)
-        .continue_to_state(MyStates::Next)
+        .continue_to_state(MyStates::SetupLevel)
         .load_collection::<LevelAssets>(),
     )
-    .add_systems(OnEnter(MyStates::Next), start_level)
-    .add_systems(Startup, init_physics)
-    .add_systems(Update, systems::print_ball_altitude)
-    .add_systems(Update, init_player)
+    .add_loading_state(LoadingState::new(MyStates::SetupLevel).continue_to_state(MyStates::Next))
+    .add_systems(OnEnter(MyStates::SetupLevel), start_level)
+    .add_systems(OnEnter(MyStates::Next), init_player)
     .add_systems(Update, init_lua)
     .run();
 }

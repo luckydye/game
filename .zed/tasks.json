@@ -5,6 +5,7 @@
 	{
 		"label": "start",
 		"command": "cargo run",
-		"allow_concurrent_runs": false
+		"use_new_terminal": false,
+		"allow_concurrent_runs": true
 	}
 ]
