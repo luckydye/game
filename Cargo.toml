@@ -22,5 +22,6 @@ anyhow = "1.0.86"
 bevy = "0.13.2"
 bevy_asset_loader = { version = "0.20.2", features = ["3d"] }
 bevy_gltf_components = "0.5.1"
+bevy_rapier3d = { version = "0.26.0", features = ["debug-render-3d"] }
 bevy_registry_export = "0.3.1"
 piccolo = "0.3.3"
