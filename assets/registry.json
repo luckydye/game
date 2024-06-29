@@ -10965,6 +10965,28 @@
       "type": "float",
       "typeInfo": "Value"
     },
+    "game::level::Base": {
+      "additionalProperties": false,
+      "isComponent": true,
+      "isResource": false,
+      "properties": {},
+      "required": [],
+      "short_name": "Base",
+      "title": "game::level::Base",
+      "type": "object",
+      "typeInfo": "Struct"
+    },
+    "game::level::Block": {
+      "additionalProperties": false,
+      "isComponent": true,
+      "isResource": false,
+      "properties": {},
+      "required": [],
+      "short_name": "Block",
+      "title": "game::level::Block",
+      "type": "object",
+      "typeInfo": "Struct"
+    },
     "game::level::Player": {
       "additionalProperties": false,
       "isComponent": true,
@@ -10973,6 +10995,17 @@
       "required": [],
       "short_name": "Player",
       "title": "game::level::Player",
+      "type": "object",
+      "typeInfo": "Struct"
+    },
+    "game::level::StaticCollider": {
+      "additionalProperties": false,
+      "isComponent": true,
+      "isResource": false,
+      "properties": {},
+      "required": [],
+      "short_name": "StaticCollider",
+      "title": "game::level::StaticCollider",
       "type": "object",
       "typeInfo": "Struct"
     },

@@ -10,4 +10,21 @@ pub struct LevelAssets {
 
 #[derive(Component, Reflect, Default, Debug)]
 #[reflect(Component)]
+pub struct StaticCollider {}
+
+#[derive(Component, Reflect, Default, Debug)]
+#[reflect(Component)]
+pub struct Base {}
+
+#[derive(Component, Reflect, Default, Debug)]
+#[reflect(Component)]
+pub struct Block {}
+
+#[derive(Component)]
+pub struct Killed {
+  pub timer: Timer,
+}
+
+#[derive(Component, Reflect, Default, Debug)]
+#[reflect(Component)]
 pub struct Player {}

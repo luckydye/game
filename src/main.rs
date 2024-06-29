@@ -2,8 +2,6 @@ mod level;
 mod lua;
 mod systems;
 
-use std::sync::Once;
-
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 use bevy_gltf_components::ComponentsFromGltfPlugin;
@@ -17,13 +15,16 @@ use systems::*;
 enum MyStates {
   #[default]
   AssetLoading,
-  SetupLevel,
-  Next,
+  SetupLevelAssets,
+  Runntime,
 }
 
 fn main() {
   App::new()
     .register_type::<Script>()
+    .register_type::<StaticCollider>()
+    .register_type::<Base>()
+    .register_type::<Block>()
     .register_type::<Player>()
     .add_plugins((
       DefaultPlugins,
@@ -35,12 +36,20 @@ fn main() {
     .insert_state::<MyStates>(MyStates::default())
     .add_loading_state(
       LoadingState::new(MyStates::AssetLoading)
-        .continue_to_state(MyStates::SetupLevel)
+        .continue_to_state(MyStates::SetupLevelAssets)
         .load_collection::<LevelAssets>(),
     )
-    .add_loading_state(LoadingState::new(MyStates::SetupLevel).continue_to_state(MyStates::Next))
-    .add_systems(OnEnter(MyStates::SetupLevel), start_level)
-    .add_systems(OnEnter(MyStates::Next), init_player)
+    .add_loading_state(
+      LoadingState::new(MyStates::SetupLevelAssets).continue_to_state(MyStates::Runntime),
+    )
+    .add_systems(OnEnter(MyStates::SetupLevelAssets), start_level)
+    .add_systems(OnEnter(MyStates::Runntime), init_player)
+    .add_systems(OnEnter(MyStates::Runntime), init_base)
+    .add_systems(OnEnter(MyStates::Runntime), init_static_colliders)
+    .add_systems(OnEnter(MyStates::Runntime), init_blocks)
     .add_systems(Update, init_lua)
+    .add_systems(Update, keyboard_input)
+    .add_systems(Update, display_events)
+    .add_systems(Update, cleanup)
     .run();
 }
