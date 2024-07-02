@@ -1,14 +1,13 @@
 mod level;
-mod lua;
+// mod lua;
 mod systems;
 
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 use bevy_gltf_components::ComponentsFromGltfPlugin;
 use bevy_rapier3d::prelude::*;
-use bevy_registry_export::*;
+// use bevy_registry_export::*;
 use level::*;
-use lua::*;
 use systems::*;
 
 #[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
@@ -21,7 +20,7 @@ enum MyStates {
 
 fn main() {
   App::new()
-    .register_type::<Script>()
+    // .register_type::<lua::Script>()
     .register_type::<StaticCollider>()
     .register_type::<Base>()
     .register_type::<Block>()
@@ -30,7 +29,7 @@ fn main() {
       DefaultPlugins,
       RapierPhysicsPlugin::<NoUserData>::default(),
       RapierDebugRenderPlugin::default(),
-      ExportRegistryPlugin::default(),
+      // ExportRegistryPlugin::default(),
       ComponentsFromGltfPlugin::default(),
     ))
     .insert_state::<MyStates>(MyStates::default())
@@ -47,7 +46,7 @@ fn main() {
     .add_systems(OnEnter(MyStates::Runntime), init_base)
     .add_systems(OnEnter(MyStates::Runntime), init_static_colliders)
     .add_systems(OnEnter(MyStates::Runntime), init_blocks)
-    .add_systems(Update, init_lua)
+    // .add_systems(Update, lua::init_lua)
     .add_systems(Update, keyboard_input)
     .add_systems(Update, display_events)
     .add_systems(Update, cleanup)
